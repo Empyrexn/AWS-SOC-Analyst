@@ -130,7 +130,7 @@ Proof the lab actually catches real attacks. Each walkthrough runs a high-value 
 
 **Coverage map:** the techniques above are visualized as a [MITRE ATT&CK Navigator layer](attack-navigator/) — import the JSON to see the lab's detection coverage on the ATT&CK matrix at a glance.
 
-![ATT&CK coverage](attack-navigator/attack-coverage.png)
+![ATT&CK coverage](attack-navigator/attack-coverage.svg)
 
 ---
 
