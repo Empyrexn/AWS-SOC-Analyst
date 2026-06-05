@@ -115,18 +115,18 @@ The same attack is visible in **both** the host layer (Wazuh) and the network la
 
 ## Detection Walkthroughs
 
-Proof the lab actually catches real attacks. Each walkthrough runs a high-value attack against the lab's isolated targets and documents it end to end — **attack → detection → triage → mitigation** — mapped to MITRE ATT&CK, with screenshots from every layer of the stack. Full write-ups in [`screenshots/`](screenshots/).
+Proof the lab actually catches real attacks. Each walkthrough runs a high-value attack against the lab's isolated targets and documents it end to end — **attack → detection → triage → mitigation** — mapped to MITRE ATT&CK, with screenshots from every layer of the stack. Full write-ups in [`attacks/`](attacks/).
 
 | # | Attack | ATT&CK | Primary detection |
 |---|---|---|---|
-| 01 | [Network recon — Nmap scan](screenshots/01-network-recon-nmap/) | T1046 / T1595 | Security Onion (Suricata) |
-| 02 | [SSH brute force](screenshots/02-ssh-brute-force/) | T1110.001 | Wazuh → TheHive → Cortex |
-| 03 | [Web SQL injection (DVWA)](screenshots/03-web-sql-injection-dvwa/) | T1190 / OWASP A03 | Wazuh (container logs) + Suricata |
-| 04 | [vsftpd 2.3.4 backdoor RCE](screenshots/04-vsftpd-backdoor-rce/) | T1190 (CVE-2011-2523) | Security Onion + Wazuh |
-| 05 | [Samba usermap_script RCE](screenshots/05-samba-usermap-rce/) | T1190 (CVE-2007-2447) | Security Onion + Wazuh |
-| 06 | [AD password spray + Kerberoasting](screenshots/06-ad-password-spray-kerberoast/) | T1110.003 / T1558.003 | Windows events + Sysmon → Wazuh |
-| 07 | [LSASS credential dumping](screenshots/07-credential-dumping-lsass/) | T1003.001 | Sysmon EID 10 → Wazuh |
-| 08 | [Caldera adversary emulation](screenshots/08-caldera-adversary-emulation/) | T1071 + chain | Sysmon/Wazuh + Security Onion |
+| 01 | [Network recon — Nmap scan](attacks/01-network-recon-nmap/) | T1046 / T1595 | Security Onion (Suricata) |
+| 02 | [SSH brute force](attacks/02-ssh-brute-force/) | T1110.001 | Wazuh → TheHive → Cortex |
+| 03 | [Web SQL injection (DVWA)](attacks/03-web-sql-injection-dvwa/) | T1190 / OWASP A03 | Wazuh (container logs) + Suricata |
+| 04 | [vsftpd 2.3.4 backdoor RCE](attacks/04-vsftpd-backdoor-rce/) | T1190 (CVE-2011-2523) | Security Onion + Wazuh |
+| 05 | [Samba usermap_script RCE](attacks/05-samba-usermap-rce/) | T1190 (CVE-2007-2447) | Security Onion + Wazuh |
+| 06 | [AD password spray + Kerberoasting](attacks/06-ad-password-spray-kerberoast/) | T1110.003 / T1558.003 | Windows events + Sysmon → Wazuh |
+| 07 | [LSASS credential dumping](attacks/07-credential-dumping-lsass/) | T1003.001 | Sysmon EID 10 → Wazuh |
+| 08 | [Caldera adversary emulation](attacks/08-caldera-adversary-emulation/) | T1071 + chain | Sysmon/Wazuh + Security Onion |
 
 **Coverage map:** the techniques above are visualized as a [MITRE ATT&CK Navigator layer](attack-navigator/) — import the JSON to see the lab's detection coverage on the ATT&CK matrix at a glance.
 
