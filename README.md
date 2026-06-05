@@ -169,7 +169,7 @@ The build surfaced a series of non-obvious problems. Each one is a small case st
 
 ## Cost Management
 
-The lab runs ~10 EC2 instances; left on 24/7 it is expensive, with Security Onion the single largest driver. Practices used to keep cost down:
+The lab runs ~13 EC2 instances; left on 24/7 it is expensive, with Security Onion the single largest driver. Practices used to keep cost down:
 - Stop instances when not actively in use
 - Single Availability Zone
 - NAT instance instead of NAT gateway where appropriate
@@ -187,14 +187,17 @@ soc-homelab-aws/
 ├── README.md
 ├── diagrams/
 │   └── architecture.png        # network / data-flow diagram
-├── docs/                       # per-component build notes
+├── docs/                       # per-component build notes (reproducible from scratch)
+│   ├── README.md               # index
 │   ├── 01-network-foundation.md
-│   ├── 02-wazuh.md
-│   ├── 03-active-directory.md
-│   ├── 04-security-onion.md
-│   ├── 05-thehive-cortex.md
-│   ├── 06-caldera.md
-│   └── 07-nessus.md
+│   ├── 02-vulnerable-targets-and-kali.md
+│   ├── 03-wazuh.md
+│   ├── 04-active-directory.md
+│   ├── 05-security-onion.md
+│   ├── 06-thehive-cortex.md
+│   ├── 07-wazuh-thehive-integration.md
+│   ├── 08-caldera.md
+│   └── 09-nessus.md
 ├── configs/                    # sanitized config files (no secrets)
 └── screenshots/                # dashboards, detections, scan results
 ```
