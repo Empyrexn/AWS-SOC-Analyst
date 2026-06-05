@@ -45,9 +45,3 @@ The Wazuh integration files need:
 sudo chmod 750 /var/ossec/integrations/custom-w2thive /var/ossec/integrations/custom-w2thive.py
 sudo chown root:wazuh /var/ossec/integrations/custom-w2thive /var/ossec/integrations/custom-w2thive.py
 ```
-
-## Before committing to GitHub
-
-- Replace nothing back to real values in these files — keep placeholders in the repo.
-- Double-check you haven't pasted a real API key, password, or the bastion's public IP anywhere.
-- Rotate any key that was ever live during the build.
