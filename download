@@ -1,0 +1,20 @@
+# Never commit secrets or key material
+*.pem
+*.key
+*.ppk
+*secret*
+*.env
+.env
+credentials
+*-with-keys.*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Large local captures (commit curated screenshots only)
+*.pcap
+*.cap
