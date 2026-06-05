@@ -169,7 +169,7 @@ The build surfaced a series of non-obvious problems. Each one is a small case st
 
 ## Cost Management
 
-The lab runs ~13 EC2 instances; left on 24/7 it is expensive, with Security Onion the single largest driver. Practices used to keep cost down:
+The lab runs ~10 EC2 instances; left on 24/7 it is expensive, with Security Onion the single largest driver. Practices used to keep cost down:
 - Stop instances when not actively in use
 - Single Availability Zone
 - NAT instance instead of NAT gateway where appropriate
