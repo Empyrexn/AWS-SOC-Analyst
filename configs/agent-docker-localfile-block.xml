@@ -1,0 +1,9 @@
+<!-- Wazuh agent: collect Docker container logs (vuln host).
+     Place INSIDE <ossec_config> in /var/ossec/etc/ossec.conf, alongside the other
+     <localfile> blocks. Outside <ossec_config> the agent will not start.
+     The logcollector runs as root, so it can read the root-only containers path.
+     See docs/03-wazuh.md -->
+<localfile>
+  <log_format>json</log_format>
+  <location>/var/lib/docker/containers/*/*-json.log</location>
+</localfile>

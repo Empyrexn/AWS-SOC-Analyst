@@ -1,0 +1,27 @@
+# Cortex connector for TheHive 5.
+# Append to: ~/thehive-stack/prod1-thehive/thehive/config/application.conf
+# Then: cd ~/thehive-stack/prod1-thehive && sudo docker compose restart thehive
+#
+# NOTES (see docs/06-thehive-cortex.md):
+#  - TheHive reaches Cortex via the HOST IP + published port (http://<host>:9001),
+#    NOT a shared Docker network. Joining networks causes an `elasticsearch` alias
+#    collision -> TheHive auths to the wrong ES -> 401 -> won't boot.
+#  - Do NOT enable the MISP module without configuring it; it breaks startup.
+#  - Remove any duplicate scalligraph.modules lines; keep a single cortex { } block.
+
+play.modules.enabled += org.thp.thehive.connector.cortex.CortexModule
+
+cortex {
+  servers = [
+    {
+      name = "local-cortex"
+      url  = "http://10.0.10.29:9001"
+      auth {
+        type = "bearer"
+        key  = "REPLACE_WITH_CORTEX_ORG_ADMIN_API_KEY"
+      }
+    }
+  ]
+  refreshDelay    = 1 minute
+  maxRetryOnError = 3
+}
