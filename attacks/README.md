@@ -31,5 +31,3 @@ Attack (Kali / Caldera)  →  Host telemetry (Wazuh + Sysmon)  ┐
 5. **Mitigation & remediation** — how to actually prevent/fix it
 6. **Detection engineering** — rule ideas and tuning notes
 7. **Screenshots checklist** — the exact shots to capture
-
-> Prefer a different folder name? These are really attack walkthroughs — `attacks/` or `walkthroughs/` reads better than `screenshots/`. Rename the folder and update the link in the main README if you like; the content is identical.
