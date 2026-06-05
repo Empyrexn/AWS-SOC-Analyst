@@ -224,7 +224,7 @@ soc-homelab-aws/
 │   ├── README.md               # index + "where each file goes"
 │   ├── docker/ wazuh/ thehive/ cortex/
 │   └── security-onion/ active-directory/ caldera/
-├── screenshots/                # attack walkthroughs (attack → detection → mitigation)
+├── attacks/                # attack walkthroughs (attack → detection → mitigation)
 │   ├── README.md               # index of all eight, with ATT&CK mapping
 │   └── 01-...  →  08-...        # one folder per attack + its screenshots
 └── attack-navigator/           # MITRE ATT&CK Navigator coverage layer
