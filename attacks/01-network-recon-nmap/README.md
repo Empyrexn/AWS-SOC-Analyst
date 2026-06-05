@@ -18,7 +18,7 @@ sudo nmap -sV -sC 10.0.40.222
 
 Nmap enumerated the full Metasploitable service stack: FTP (vsftpd 2.3.4), OpenSSH, telnet, SMTP, HTTP (Apache 2.2.8), Samba (139/445), MySQL, PostgreSQL, UnrealIRCd (6667), DVWA (8081), Tomcat (8180), and a root bind shell on 1524.
 
-![Nmap scan output](./01-nmap-output.png)
+![Nmap scan output](https://github.com/user-attachments/assets/d6fbe86c-8014-45d2-8323-08fd1c7696ae)
 
 **Analyst note - target is containerized.** The scan leaked two tells that `10.0.40.222` is a Docker container, not a bare host: the FTP banner reported `PASV IP 172.17.0.2` (Docker's default bridge network) and the SMB hostname came back as `b50055b5120a` (a container ID). Useful context for scoping.
 
@@ -28,7 +28,7 @@ Nmap enumerated the full Metasploitable service stack: FTP (vsftpd 2.3.4), OpenS
 
 The scan generated **hundreds of Suricata alerts** from `10.0.20.23 -> 10.0.40.222`. Filtered in **Alerts** to the Kali source IP:
 
-![Security Onion alerts](./02-securityonion-scan-alert.png)
+![Security Onion alerts](https://github.com/user-attachments/assets/62c068fe-28b0-4ae9-8a2d-c213b853af91)
 
 Representative signatures that fired (real SIDs from this run):
 
@@ -54,7 +54,7 @@ Representative signatures that fired (real SIDs from this run):
 
 Grouping **Hunt** by `destination.port` shows the classic one-source-to-many-ports pattern - the Metasploitable services light up: 8083, 8081, 80, 8180, 1524, 445, 21, 3306, 5432, 22, 25, 2222, 137, 135.
 
-![Hunt destination.port fan-out](./03-securityonion-hunt-connfanout.png)
+![Hunt destination.port fan-out](https://github.com/user-attachments/assets/e5a3436f-d648-47ea-969c-653c25aaaf83)
 
 > Two analyst notes on this view: (1) `destination.port 4789` with the huge count is the **VXLAN traffic-mirror transport itself** (AWS encapsulation), not a scanned service - it's infrastructure. (2) This view wasn't source-filtered, so normal infra ports (53 DNS, 123 NTP, 389 LDAP) also appear; filter `source.ip = 10.0.20.23` to isolate the scan cleanly.
 
