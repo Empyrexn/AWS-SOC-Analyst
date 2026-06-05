@@ -117,7 +117,7 @@ Run these on your **local machine**, not from inside the bastion.
 
 ## Cost & teardown
 
-**Cost:** ~13 instances; 24/7 ≈ $700–1,100+/mo (Security Onion is the biggest driver). Stop instances when idle; use a single AZ; NAT instance over gateway; gp3 EBS.
+**Cost:** ~10 instances; 24/7 ≈ $700–1,100+/mo (Security Onion is the biggest driver). Stop instances when idle; use a single AZ; NAT instance over gateway; gp3 EBS.
 
 **Teardown order** (reverse of build, to avoid dependency errors): terminate instances → delete traffic-mirror sessions/targets/filters → release Elastic IPs → delete NAT → detach/delete IGW → delete subnets/route tables → delete the VPC.
 
