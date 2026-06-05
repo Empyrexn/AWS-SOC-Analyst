@@ -1,6 +1,6 @@
 # ATT&CK Coverage Layer
 
-[`soc-lab-coverage.json`](./soc-lab-coverage.json) is a [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) layer highlighting every technique the lab demonstrates and detects. Each highlighted cell maps to an end-to-end walkthrough in [`../screenshots/`](../screenshots/).
+[`soc-lab-coverage.json`](./soc-lab-coverage.json) is a [MITRE ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) layer highlighting every technique the lab demonstrates and detects. Each highlighted cell maps to an end-to-end walkthrough in [`../screenshots/`](../attacks/).
 
 ## View it
 
