@@ -8,10 +8,6 @@
 2. **Open Existing Layer → Upload from local** → choose `soc-lab-coverage.json`.
 3. The matrix loads with the lab's techniques shaded green. Hover any highlighted cell to read which walkthrough covers it (`WT01`–`WT08`) and how it's detected.
 
-## Export the image for the README
-
-In Navigator, use the toolbar **camera / download icon → render to SVG** (or PNG). Save it here as `attack-coverage.png` — the main README references it at `attack-navigator/attack-coverage.png`, so it'll render automatically.
-
 ## Techniques covered
 
 | Tactic | Technique | Walkthrough |
