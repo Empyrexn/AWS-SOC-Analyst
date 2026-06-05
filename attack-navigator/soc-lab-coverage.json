@@ -1,0 +1,192 @@
+{
+  "name": "SOC Home Lab — Detection Coverage",
+  "versions": {
+    "attack": "15",
+    "navigator": "5.0.0",
+    "layer": "4.5"
+  },
+  "domain": "enterprise-attack",
+  "description": "MITRE ATT&CK techniques demonstrated and detected in the AWS SOC home lab. Each highlighted technique maps to an end-to-end walkthrough in screenshots/ (attack -> detection -> triage -> mitigation).",
+  "filters": {
+    "platforms": [
+      "Windows",
+      "Linux",
+      "macOS",
+      "Network",
+      "PRE",
+      "Containers"
+    ]
+  },
+  "sorting": 0,
+  "layout": {
+    "layout": "side",
+    "aggregateFunction": "average",
+    "showID": false,
+    "showName": true,
+    "showAggregateScores": false,
+    "countUnscored": false
+  },
+  "hideDisabled": false,
+  "techniques": [
+    {
+      "techniqueID": "T1595",
+      "tactic": "reconnaissance",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT01 - Nmap active scanning. Detected by Security Onion (Suricata scan signatures, Zeek conn fan-out).",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1046",
+      "tactic": "discovery",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT01 - Network service discovery via Nmap. Detected by Security Onion.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1190",
+      "tactic": "initial-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT03/04/05 - Exploit public-facing app: DVWA SQLi, vsftpd 2.3.4 backdoor (CVE-2011-2523), Samba usermap (CVE-2007-2447). Detected by Security Onion + Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1110",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "Brute force - see sub-techniques (Password Guessing, Password Spraying).",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1110.001",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT02 - SSH password guessing (Hydra). Detected by Wazuh rule 5712 -> TheHive -> Cortex.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1110.003",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT06 - AD password spraying. Detected via Windows 4625 burst across many accounts -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1558.003",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT06 - Kerberoasting. Detected via Windows 4769 with RC4 (0x17) encryption -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1003",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "OS credential dumping - see sub-technique LSASS Memory.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": true
+    },
+    {
+      "techniqueID": "T1003.001",
+      "tactic": "credential-access",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT07 - LSASS memory access. Detected via Sysmon EID 10 (ProcessAccess to lsass.exe) -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1071",
+      "tactic": "command-and-control",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT08 - Caldera Sandcat C2 beaconing. Detected via Security Onion (Zeek conn cadence) + Sysmon EID 3.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1082",
+      "tactic": "discovery",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT08 - System information discovery (Caldera ability). Detected via Sysmon EID 1 -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1057",
+      "tactic": "discovery",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT08 - Process discovery (Caldera ability). Detected via Sysmon EID 1 -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1033",
+      "tactic": "discovery",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT08 - System owner/user discovery (Caldera ability). Detected via Sysmon EID 1 -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    },
+    {
+      "techniqueID": "T1016",
+      "tactic": "discovery",
+      "score": 100,
+      "color": "#2e7d32",
+      "comment": "WT08 - System network configuration discovery (Caldera ability). Detected via Sysmon EID 1 -> Wazuh.",
+      "enabled": true,
+      "metadata": [],
+      "showSubtechniques": false
+    }
+  ],
+  "gradient": {
+    "colors": [
+      "#ffffffff",
+      "#66b1ffff",
+      "#096ff7ff"
+    ],
+    "minValue": 0,
+    "maxValue": 100
+  },
+  "legendItems": [
+    {
+      "label": "Detected in lab",
+      "color": "#2e7d32"
+    }
+  ],
+  "metadata": [],
+  "links": [],
+  "showTabContextMenus": true,
+  "selectTechniquesAcrossTactics": true,
+  "selectSubtechniquesWithParent": false
+}
