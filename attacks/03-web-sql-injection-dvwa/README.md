@@ -29,6 +29,9 @@ sqlmap confirmed the `id` parameter injectable via **four** techniques and enume
 
 ![sqlmap injection + database enumeration](https://github.com/user-attachments/assets/33910e94-3015-46f6-89f2-b306df2700cd)
 
+![sqlmap injection + database enumeration](https://github.com/user-attachments/assets/0dafadf7-91d0-4884-afc3-97d83823f5f1)
+
+
 ---
 
 ## 2. Detection - Security Onion (Suricata)
