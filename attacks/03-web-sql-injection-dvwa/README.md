@@ -1,67 +1,76 @@
-# 03 — Web SQL Injection (DVWA)
+# 03 - Web SQL Injection (DVWA)
 
-**MITRE ATT&CK:** T1190 Exploit Public-Facing Application · **OWASP:** A03:2021 Injection
-**Attacker:** Kali · **Target:** DVWA `10.0.40.222:8081` · **Detection:** Wazuh (container logs) + Security Onion (Suricata)
+**MITRE ATT&CK:** T1190 Exploit Public-Facing Application - **OWASP:** A03:2021 Injection
+**Status:** VALIDATED - network detection confirmed; host-layer blind spot documented
+**Attacker:** Kali `10.0.20.23` - **Target:** DVWA `10.0.40.222:8081`
+**Primary detection:** Security Onion / Suricata - **Host detection (Wazuh):** none (see Section 3)
 
-Web app attacks are the most common real-world initial-access vector. DVWA is purpose-built to be injected, and the lab captures it both at the host (Docker logs → Wazuh) and on the wire (Suricata).
+Web-app injection is the most common real-world initial-access vector. This run shows Security Onion catching it cleanly on the wire - and confirms that the *host* SIEM is blind to it, which is an important architecture lesson about where web-attack detection has to live.
 
 ---
 
 ## 1. The attack
 
-Log into DVWA (`admin`/`password`), set security to Low, and hit the **SQL Injection** page. A classic auth/logic-break payload in the `id` field:
-```
-1' OR '1'='1
-```
-Then automate extraction with sqlmap to make it loud and realistic:
+DVWA was set to **security = low**. The session was minted from Kali with `curl` first: DVWA's login form carries an anti-CSRF `user_token`, so a raw cookie-paste fails (the first sqlmap attempt 302-redirected to `login.php` because the pasted `PHPSESSID` wasn't authenticated). With a valid session, sqlmap ran against the `id` parameter:
+
 ```bash
 sqlmap -u "http://10.0.40.222:8081/vulnerabilities/sqli/?id=1&Submit=Submit" \
-  --cookie="PHPSESSID=<your-session>; security=low" --batch --dbs
+  --cookie="PHPSESSID=<authed-session>; security=low" --batch --dbs
 ```
 
-![SQLi payload + result](./01-dvwa-sqli.png)
-> 📸 *Capture: the DVWA page returning extra rows (or sqlmap dumping the database list).*
+sqlmap confirmed the `id` parameter injectable via **four** techniques and enumerated the databases:
+
+- **boolean-based blind** - `id=1' OR NOT 3910=3910#`
+- **error-based** - `EXTRACTVALUE(...)`
+- **time-based blind** - `... AND (SELECT ... SLEEP(5))`
+- **UNION query** - 2 columns
+- Back-end: **MySQL >= 5.1 (MariaDB fork)**; stack: Apache 2.4.25 / Debian 9
+- Databases found: **`dvwa`**, **`information_schema`** (and the user table was within reach via `-D dvwa -T users --dump`)
+
+![sqlmap injection + database enumeration](https://github.com/user-attachments/assets/33910e94-3015-46f6-89f2-b306df2700cd)
 
 ---
 
-## 2. Detection
+## 2. Detection - Security Onion (Suricata)
 
-**Wazuh (Docker container logs)** — the vuln host forwards Apache/DVWA logs via the `localfile` block ([docs/03](../../docs/03-wazuh.md)). The injection requests appear as web access events; sqlmap's volume and signature-laden URIs stand out. Filter the vuln-host agent for the DVWA container and the `/vulnerabilities/sqli/` URI.
+Three signatures fired from `10.0.20.23 -> 10.0.40.222:8081`:
 
-![Wazuh web log event](./02-wazuh-weblog-sqli.png)
-> 📸 *Capture: the Wazuh event showing the SQLi request URI from the DVWA container log.*
+| Signature | SID | Severity | What it caught |
+|---|---|---|---|
+| ET SCAN Sqlmap SQL Injection Scan | 2008538 | medium | the **sqlmap tool** itself (traffic fingerprint) |
+| ET WEB_SERVER Possible MySQL SQLi Attempt Information Schema Access | 2017808 | **high** | the `information_schema` enumeration (`--dbs`) |
+| ET WEB_SERVER Possible SQL Injection SELECT CAST in HTTP URI | 2053467 | **high** | SQL-injection payload structure in the URI |
 
-**Security Onion (Suricata)** — ET WEB_SERVER / SQL-injection signatures fire on the malicious HTTP payloads crossing the mirror. Check SO **Alerts** filtered to the Kali source and the DVWA destination; Zeek `http.log` in **Hunt** shows the request URIs.
+![Security Onion SQLi alerts](https://github.com/user-attachments/assets/f2754506-d78e-44dc-b66d-8de40cc1cc14)
 
-![Suricata SQLi alert](./03-securityonion-sqli-alert.png)
-> 📸 *Capture: SO Suricata SQL-injection alert + the Zeek http.log entries in Hunt.*
-
----
-
-## 3. Triage
-
-Confirm method (manual vs automated — sqlmap's user-agent and request cadence are obvious), what was accessed (did it reach `--dump`?), and whether the app returned data (successful extraction vs blocked). Tag the source IP and the targeted endpoint.
+Two complementary detection styles in one attack: **tool attribution** (2008538 fingerprints sqlmap's traffic - the same idea as the Nmap User-Agent rule in [WT01](../01-network-recon-nmap/)) plus **technique/payload detection** (the high-severity `information_schema` and `SELECT CAST` rules). Suricata inspects HTTP regardless of port, so traffic to `8081` still triggers the `ET WEB_SERVER` ruleset.
 
 ---
 
-## 4. Mitigation & remediation
+## 3. Host layer - the Wazuh blind spot (the finding)
 
-- **Parameterized queries / prepared statements** — the real fix; never concatenate input into SQL.
-- **Input validation & least-privilege DB account** — the app's DB user shouldn't be able to read every schema.
+**Wazuh produced no SQL-injection or web-application alerts for this attack.** Filtering the vuln-host agent over the period shows only SSH/auth activity left over from the earlier brute-force test - zero web alerts:
+
+![Wazuh - no web-attack alerts](https://github.com/user-attachments/assets/0581f8bd-2880-4b7b-a185-f84e5cd36280)
+
+> The dashboard above is dominated by the [WT02](../02-ssh-brute-force/) auth data on purpose - it's the proof that **nothing web-related reached Wazuh**.
+
+**Why:** DVWA runs inside a Docker container. The agent's Docker collection reads container `*-json.log` (stdout/stderr), but DVWA's Apache access logs don't surface there in a form Wazuh's rules flag - so a network-borne attack against a containerized web app is invisible to the host SIEM here. Same host-vs-network lesson as WT01, now for **exploitation** rather than recon.
+
+**Architectural takeaway:** to see web attacks at the SIEM you need either network IDS (Security Onion, which worked) or **application/WAF log forwarding** into Wazuh. Network monitoring isn't optional - it's the only thing that caught this.
+
+---
+
+## 4. Triage
+
+Confirmed SQL injection with **data access** - the back-end DB was enumerated and the `dvwa.users` table (password hashes) was reachable. Source `10.0.20.23` (internal). The combination of the **sqlmap tool-attribution** alert and the **information_schema access** alert from one source is a high-confidence "active SQLi tool dumping the database" signal. Escalate; treat the application database as exposed.
+
+---
+
+## 5. Mitigation & remediation
+
+- **Parameterized queries / prepared statements** - the real fix; never concatenate input into SQL.
+- **Least-privilege DB account** - the app's user shouldn't be able to read `information_schema` or other schemas.
+- **Input validation** and **disable verbose SQL errors** (kills error-based extraction).
 - **WAF** in front of the app to block injection signatures.
-- **Disable verbose errors** so the app doesn't leak schema details.
-
----
-
-## 5. Detection engineering
-
-- Custom Wazuh decoder/rule to flag SQLi keywords (`UNION SELECT`, `OR 1=1`, `information_schema`) in web-log URIs → high-severity alert.
-- Tune Suricata web rules to your apps; allowlist your own scanner (Nessus) to cut noise.
-- Sigma rule on proxy/web logs for portability.
-
----
-
-## Screenshots checklist
-- [ ] `01-dvwa-sqli.png` — payload/sqlmap result
-- [ ] `02-wazuh-weblog-sqli.png` — Wazuh container-log event
-- [ ] `03-securityonion-sqli-alert.png` — Suricata alert + Zeek http.log
+- DVWA's **"Impossible"** security level uses prepared statements - re-running sqlmap against it shows the injection fail, a clean before/after demonstration of the fix.
