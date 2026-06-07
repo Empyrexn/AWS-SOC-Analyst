@@ -83,5 +83,3 @@ One internal host (`10.0.20.23`) sweeping another host's full service range in s
 - **Reduce attack surface** - close the unused/legacy services on the target (most Metasploitable ports have no business being open).
 - **IPS mode** - Suricata can *drop* on these scan signatures when deployed inline, not just alert.
 - **Allowlist sanctioned scanners** - exempt your Nessus host so authorized vuln scans don't bury real recon in noise.
-
----
