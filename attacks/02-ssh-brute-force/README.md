@@ -96,5 +96,3 @@ Promote alert -> case. Confirmed facts: source `10.0.20.23` (internal), target `
 - **fail2ban** / account lockout to ban sources after N failures.
 - **MFA** on SSH where feasible; kill weak passwords like `Summer2026!`.
 - **Restrict SSH** to the bastion/jump host only (the lab already gates this with security groups).
-
----
