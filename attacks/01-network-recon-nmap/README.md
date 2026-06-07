@@ -85,9 +85,3 @@ One internal host (`10.0.20.23`) sweeping another host's full service range in s
 - **Allowlist sanctioned scanners** - exempt your Nessus host so authorized vuln scans don't bury real recon in noise.
 
 ---
-
-## 6. Detection engineering
-
-- The **Nmap NSE User-Agent** signature is a cheap, high-confidence IOC - keep it high-priority but allowlist the Nessus source IP.
-- Build a correlation/threshold rule: *N+ distinct destination ports from one source within M seconds* -> "host port scan" (portable as a Sigma rule across SIEMs).
-- Follow-up experiment to document: re-run as `sudo nmap -sS 10.0.40.222` (no scripts) and compare the alert volume/severity - demonstrates how scan technique changes detectability.
