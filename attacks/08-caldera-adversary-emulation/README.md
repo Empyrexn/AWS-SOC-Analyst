@@ -1,74 +1,88 @@
-# 08 — Caldera Adversary Emulation
+# 08 - Caldera Adversary Emulation
 
-**MITRE ATT&CK:** multi-technique chain (Discovery → Collection → C2) · T1071 Application Layer Protocol (C2)
-**Attacker:** MITRE Caldera (`10.0.10.29:8888`) → Sandcat agents on endpoints · **Detection:** Sysmon/Wazuh + Security Onion
+**MITRE ATT&CK:** T1071 Application Layer Protocol (C2) - T1082 / T1057 / T1033 / T1016 Discovery - T1105 Ingress Tool Transfer
+**Status:** VALIDATED - full chain caught across **all three layers**: network (Suricata), host (Sysmon -> Wazuh), and SOAR (TheHive)
+**Attacker:** MITRE Caldera C2 (`10.0.10.29:8888`) -> Sandcat agents on Windows Server 2022 hosts - **Detection:** Security Onion + Wazuh + TheHive
 
-The capstone. Instead of one technique, Caldera runs a *chain* of ATT&CK abilities automatically, exercising host and network detection together and producing a realistic multi-stage incident — exactly what a SOC sees.
-
----
-
-## 1. The attack
-
-With Sandcat agents checked in (see [docs/08](../../docs/08-caldera.md)), launch an operation:
-- Caldera UI (login `red`) → **Operations → Create Operation**
-- Pick an **adversary profile** (a built-in chain — e.g. discovery + collection abilities)
-- Target the `red` agent group → **Start**
-
-Caldera executes the abilities in sequence and reports each technique with its ATT&CK ID — and the agent **beacons back** to the C2 server on its contact interval.
-
-![Caldera operation running](./01-caldera-operation.png)
-> 📸 *Capture: the Caldera operation view showing executed abilities and their ATT&CK technique IDs.*
+The capstone. Instead of one technique, Caldera ran an automated **Discovery** profile - a chain of ATT&CK abilities - across three checked-in Sandcat agents, exercising host and network detection together and producing a realistic multi-stage incident. This is the walkthrough that ties the entire lab together: one operation, caught simultaneously at the network edge, on the endpoint, and correlated into a case.
 
 ---
 
-## 2. Detection
+## 1. The operation
 
-**Sysmon → Wazuh (host)** — each ability leaves endpoint telemetry:
-- **EID 1** process creation for every command the agent runs (the parent chain traces back to the Sandcat process, `splunkd.exe` in `C:\Users\Public`).
-- **EID 3** network connections to the C2 (`10.0.10.29:8888`).
-- Discovery commands (whoami, net, systeminfo, etc.) light up as a cluster from one process.
+Caldera 5.3.0, operation **`08-SOC-Lab-Discovery`** - the built-in **Discovery** adversary profile, `atomic` planner, **`plain-text`** obfuscator (deliberately - cleartext commands make the host telemetry readable), run autonomously against group `red`. Three Sandcat agents checked in (paws `emymhn` / `wzmcpa` / `tpxyaq`) on Server 2022 hosts `EC2AMAZ-IVIQBVU` (dc01), `-C0GQIF6`, `-TNPACDB`. All 24 ability decisions returned **success**:
 
-![Wazuh Sysmon ability chain](./02-wazuh-sysmon-chain.png)
-> 📸 *Capture: Wazuh showing the burst of Sysmon EID 1 process-creates from the agent, with the suspicious parent.*
+![Caldera Discovery operation - abilities success across 3 agents](https://github.com/user-attachments/assets/b4816741-4b56-4d8c-a7f5-e2e49b84010e)
 
-**Security Onion (network)** — the agent's periodic beaconing to the C2 is detectable as **regular, fixed-interval connections** (low-jitter heartbeat) to one destination. Zeek `conn.log` in **Hunt** makes the beacon cadence visible; Suricata may flag the C2 pattern.
-
-![Security Onion C2 beacon](./03-securityonion-c2-beacon.png)
-> 📸 *Capture: SO Hunt showing the repeating beacon connections to 10.0.10.29:8888 (the C2).*
-
-**TheHive** — any ability that trips a level ≥ 7 Wazuh rule auto-creates an alert; promote to a case and reconstruct the kill chain from the correlated host + network evidence.
-
-![TheHive case kill-chain](./04-thehive-case.png)
-> 📸 *Capture: the TheHive case tying the emulation's alerts together.*
+Visible in the run: *Identify active user* (T1033), *Identify local users*, *Find user processes* (T1057), *View admin shares*, *Discover domain controller* - the same profile also executes system-information (T1082) and network-configuration (T1016) discovery. Each agent beacons back to the C2 on its contact interval.
 
 ---
 
-## 3. Triage
+## 2. Network detection - Security Onion (T1071)
 
-This is multi-stage: map each observed technique back to ATT&CK and rebuild the sequence (foothold → discovery → collection → C2). The beaconing destination and the Sandcat process are the anchor observables. Practicing this correlation — host telemetry + network beacon + single timeline — is the core SOC skill the whole lab exists to build.
+The agent's C2 traffic lit up Suricata immediately, including a **dedicated Sandcat signature at HIGH severity**:
 
----
+![Security Onion - Suricata Sandcat C2 alerts](https://github.com/user-attachments/assets/f7b23682-b79c-499e-b3db-3440c11f7011)
 
-## 4. Mitigation & remediation
+- **`ET MALWARE Golang/Sandcat Plugin Activity (POST)` - HIGH** - fires on the Sandcat agent's POST beacons (the strongest single network signal).
+- **`ET USER_AGENTS Go HTTP Client User-Agent`** and **`ET INFO Go-http-client User-Agent Observed Outbound/Inbound`** - the Go runtime user-agent that Sandcat is built on.
 
-- **EDR / behavioral detection** for agent and living-off-the-land activity.
-- **Egress filtering** — block/inspect outbound to unsanctioned destinations to break C2.
-- **Application allowlisting** to stop unsigned agents like the dropped binary.
-- **Network detection of beaconing** (interval/jitter analytics) as a standing capability.
-- **Least privilege** to limit what each technique can accomplish.
+These repeat at a **regular cadence** - that fixed-interval heartbeat to one destination (`10.0.10.29:8888`) is the network fingerprint of C2 beaconing (T1071).
 
 ---
 
-## 5. Detection engineering
+## 3. Host detection - Sysmon -> Wazuh (T1105 + discovery)
 
-- Build a beacon-detection analytic on Zeek `conn.log`: same src→dst, near-constant interval, many connections → "possible C2 beacon."
-- Wazuh rule for known LOLBins spawned by an unusual parent (the agent).
-- Map your detections to an **ATT&CK Navigator** layer to visualize coverage — a strong portfolio artifact in itself.
+On the endpoint, Wazuh caught the chain via Sysmon:
+
+![Wazuh dc01 - file drop (lvl 15) + WMI AV discovery](https://github.com/user-attachments/assets/4733ef37-6164-46cd-85b6-d44100ba861e)
+
+![Wazuh dc01 dashboard - Sysmon groups + level-12 alerts](https://github.com/user-attachments/assets/971a0870-2519-4936-83de-fe762ec03a97)
+
+- **`92213` "Executable file dropped in folder commonly used by malware" - level 15** (Sysmon **EID 11**) - the Sandcat binary (`splunkd.exe`) written to `C:\Users\Public`. That maps to **T1105 Ingress Tool Transfer** and is the highest-severity alert of the whole run.
+- **`92077` "WMI command was used for AV product discovery" - level 10** - the *Identify Antivirus* ability's WMI query. **This is the standout detail:** that ability actually **errored** (see section 5), yet the attempt was still detected. You catch the behavior, not just the result.
+- The discovery commands generate a **Sysmon EID 1** process-create burst parented to the agent, and **EID 3** connections to the C2 - both now flowing (the `sysmon`, `sysmon_eid1_detection`, `sysmon_eid11_detection` rule groups populate the dashboard).
 
 ---
 
-## Screenshots checklist
-- [ ] `01-caldera-operation.png` — operation + ATT&CK IDs
-- [ ] `02-wazuh-sysmon-chain.png` — Sysmon process-create burst in Wazuh
-- [ ] `03-securityonion-c2-beacon.png` — beacon cadence in SO Hunt
-- [ ] `04-thehive-case.png` — correlated TheHive case
+## 4. SOAR correlation - TheHive (the pipeline end to end)
+
+The level-15 drop alert crossed the `level >= 7` threshold and **auto-created TheHive case #4** with no analyst action:
+
+![TheHive case #4 - auto-created from the Wazuh level-15 drop alert](TheHive" src="https://github.com/user-attachments/assets/cb9022ae-4195-4f5f-851b-5bc621017ada)
+
+```
+Case #4  "Executable file dropped in folder commonly used by malware"   SEVERITY: HIGH
+Wazuh rule 92213, level 15  |  MITRE T1105 (Ingress Tool Transfer), tactic Command and Control
+agent client01 (10.0.30.58)  |  Detection < 1 second  |  Triage 3m 21s
+```
+
+This is the **Wazuh -> TheHive SOAR pipeline** ([WT02](../02-ssh-brute-force/) proved it on brute force; here it triggers off endpoint EID 11) closing the loop on the emulation automatically.
+
+---
+
+## 5. The ability that "failed" - and was caught anyway
+
+Two ability instances errored with `Description = Invalid namespace`. The command:
+
+```powershell
+Get-WmiObject -Namespace "root\SecurityCenter2" -Class AntiVirusProduct ...
+```
+
+`root\SecurityCenter2` is populated by the Windows **Security Center** service, which exists **only on client SKUs (Windows 10/11)** - **Windows Server has no such namespace.** Every Caldera agent here is on Server 2022, so the query can't resolve and returns "Invalid namespace." It's an environment mismatch (a workstation ability run against servers), not a deployment fault. Crucially, Wazuh's **rule 92077** fired on the WMI call regardless - **the failed technique still produced a detection.** That's exactly the resilience a SOC wants: alert on the attempt, not just on success.
+
+---
+
+## 6. Triage
+
+This is the multi-stage incident the whole lab exists to practice. Rebuild the sequence from correlated evidence: **agent dropped** (`splunkd.exe`, EID 11 / T1105) -> **C2 beacon established** (Suricata Sandcat POST / T1071) -> **discovery chain** (EID 1 burst / T1082, T1057, T1033, T1016) -> bonus recon (admin shares, domain-controller discovery). The anchor observables are the dropped binary and the beacon destination `10.0.10.29:8888`. TheHive case #4 is the starting point; an analyst promotes it, attaches the network and host evidence, and reconstructs one timeline.
+
+---
+
+## 7. Mitigation & remediation
+
+- **Application allowlisting** to stop unsigned dropped agents (`splunkd.exe` in a public folder).
+- **Egress filtering / proxy inspection** to break C2 to unsanctioned destinations.
+- **Network beacon analytics** (interval + jitter) as a standing detection.
+- **EDR / behavioral detection** for living-off-the-land and agent activity.
+- **Least privilege** to limit what each discovery technique can enumerate.
