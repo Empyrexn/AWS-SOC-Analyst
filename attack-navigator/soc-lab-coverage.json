@@ -12,24 +12,21 @@
   "layout": { "layout": "side", "showID": true, "showName": true },
   "hideDisabled": false,
   "techniques": [
-    { "techniqueID": "T1046", "color": "#e8a33d", "comment": "WT01 - Network service discovery (Nmap). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-    { "techniqueID": "T1190", "color": "#e8a33d", "comment": "WT03/04/05 - Exploit public-facing app: DVWA SQLi, vsftpd backdoor (CVE-2011-2523), Samba usermap (CVE-2007-2447). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-
+    { "techniqueID": "T1046", "color": "#2e7d32", "comment": "WT01 VALIDATED - Network service discovery (Nmap). Security Onion/Suricata fired ET SCAN signatures (SIDs 2009358, 2024364, 2001219, 2010937, 2010939, GPL 2102465). Wazuh blind (agentless container target).", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1190", "color": "#2e7d32", "comment": "VALIDATED via WT03 (DVWA SQLi), WT04 (vsftpd backdoor CVE-2011-2523 -> root Meterpreter), WT05 (Samba usermap CVE-2007-2447 -> root). WT05 had no stock Suricata signature (detection gap) - closed with a custom rule (SID 1000001, UTF-16-tolerant PCRE). Wazuh blind (agentless containers).", "enabled": true, "showSubtechniques": false },
     { "techniqueID": "T1110", "color": "#e8a33d", "comment": "Brute Force (parent). See sub-techniques below.", "enabled": true, "showSubtechniques": true },
-    { "techniqueID": "T1110.001", "color": "#e8a33d", "comment": "WT02 - SSH password guessing (Hydra) -> Wazuh 5712 -> TheHive -> Cortex. DOCUMENTED.", "enabled": true, "showSubtechniques": true },
-    { "techniqueID": "T1110.003", "color": "#e8a33d", "comment": "WT06 - AD password spraying (Windows 4625 burst) -> Wazuh. DOCUMENTED.", "enabled": true, "showSubtechniques": true },
-
+    { "techniqueID": "T1110.001", "color": "#2e7d32", "comment": "WT02 VALIDATED - SSH password guessing (Hydra). Full pipeline: Wazuh 5712/40111 (L10) -> TheHive auto-alert with IP observables -> Cortex (IP-API/DShield).", "enabled": true, "showSubtechniques": true },
+    { "techniqueID": "T1110.003", "color": "#2e7d32", "comment": "WT06 VALIDATED - AD password spray (nxc, one password x many users). Wazuh dc01: rule 60122 (logon failure) across multiple accounts = spray fingerprint, plus 92652 flagging the successful NTLM hit (bwilson) as possible PtH.", "enabled": true, "showSubtechniques": true },
     { "techniqueID": "T1558", "color": "#e8a33d", "comment": "Steal or Forge Kerberos Tickets (parent). See Kerberoasting.", "enabled": true, "showSubtechniques": true },
-    { "techniqueID": "T1558.003", "color": "#e8a33d", "comment": "WT06 - Kerberoasting (Windows 4769 RC4 0x17) -> Wazuh. DOCUMENTED.", "enabled": true, "showSubtechniques": true },
-
+    { "techniqueID": "T1558.003", "color": "#2e7d32", "comment": "WT06 VALIDATED - Kerberoasting (impacket GetUserSPNs, RC4 TGS for svc_sql). 4769 too noisy to alert by default (gap). Closed with custom Wazuh rule 100100 (4769 + RC4 0x17 + non-machine account), fires level 12.", "enabled": true, "showSubtechniques": true },
     { "techniqueID": "T1003", "color": "#e8a33d", "comment": "OS Credential Dumping (parent). See LSASS Memory.", "enabled": true, "showSubtechniques": true },
-    { "techniqueID": "T1003.001", "color": "#e8a33d", "comment": "WT07 - LSASS memory access (Sysmon EID 10) -> Wazuh. DOCUMENTED.", "enabled": true, "showSubtechniques": true },
-
-    { "techniqueID": "T1071", "color": "#e8a33d", "comment": "WT08 - Caldera Sandcat C2 beaconing (Zeek conn cadence + Sysmon EID 3). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-    { "techniqueID": "T1082", "color": "#e8a33d", "comment": "WT08 - System information discovery (Caldera, Sysmon EID 1). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-    { "techniqueID": "T1057", "color": "#e8a33d", "comment": "WT08 - Process discovery (Caldera, Sysmon EID 1). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-    { "techniqueID": "T1033", "color": "#e8a33d", "comment": "WT08 - System owner/user discovery (Caldera, Sysmon EID 1). DOCUMENTED.", "enabled": true, "showSubtechniques": false },
-    { "techniqueID": "T1016", "color": "#e8a33d", "comment": "WT08 - System network configuration discovery (Caldera, Sysmon EID 1). DOCUMENTED.", "enabled": true, "showSubtechniques": false }
+    { "techniqueID": "T1003.001", "color": "#2e7d32", "comment": "WT07 VALIDATED - LSASS dump via comsvcs.dll MiniDump (LOLBAS). Sysmon EID 10 had to be armed via a full driver reinstall (a live -c reload won't arm the callback). Stock Wazuh rule 61612 is level 0 (silent) = gap. Closed with custom Wazuh rule 100110 (EID 10 + lsass + credential-read mask), fires level 12.", "enabled": true, "showSubtechniques": true },
+    { "techniqueID": "T1071", "color": "#2e7d32", "comment": "WT08 VALIDATED - Caldera Sandcat C2. Security Onion/Suricata fired ET MALWARE Golang/Sandcat Plugin Activity (POST) at HIGH, plus ET Go-http-client User-Agent (in/outbound) at a regular beacon cadence. Host side: Sysmon EID 3 to the C2.", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1105", "color": "#2e7d32", "comment": "WT08 VALIDATED (bonus) - Ingress Tool Transfer: the dropped Sandcat binary (splunkd.exe in the Public folder) fired Wazuh rule 92213 level 15 via Sysmon EID 11, which auto-created TheHive case #4 - the full Wazuh -> TheHive SOAR pipeline end to end.", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1082", "color": "#2e7d32", "comment": "WT08 VALIDATED - System Information Discovery via the Caldera Discovery profile (success across 3 Sandcat agents). Sysmon EID 1 process-create telemetry on dc01.", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1057", "color": "#2e7d32", "comment": "WT08 VALIDATED - Process Discovery (Caldera ability 'Find user processes', success). Sysmon EID 1.", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1033", "color": "#2e7d32", "comment": "WT08 VALIDATED - System Owner/User Discovery (Caldera ability 'Identify active user', success). Sysmon EID 1.", "enabled": true, "showSubtechniques": false },
+    { "techniqueID": "T1016", "color": "#2e7d32", "comment": "WT08 VALIDATED - System Network Configuration Discovery (Caldera Discovery profile, success). Sysmon EID 1. NOTE: the Identify-Antivirus ability errored (Invalid namespace - root/SecurityCenter2 is client-OS only, absent on Server) yet was still detected by Wazuh rule 92077 (WMI AV product discovery, level 10).", "enabled": true, "showSubtechniques": false }
   ],
   "legendItems": [
     { "label": "Validated (run + detected)", "color": "#2e7d32" },
